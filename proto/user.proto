@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package userpb;
+
+option go_package = "github.com/nicolasmaurizi/go-grpc-rest-basics/proto;userpb";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (UserResponse);
+}
+
+message CreateUserRequest {
+  string name  = 1;
+  string email = 2;
+}
+
+message User {
+  int64  id    = 1;
+  string name  = 2;
+  string email = 3;
+}
+
+message UserResponse {
+  User user = 1;
+}

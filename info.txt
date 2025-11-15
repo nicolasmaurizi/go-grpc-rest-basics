@@ -1,0 +1,11 @@
+
+https://github.com/protocolbuffers/protobuf/releases
+
+https://github.com/protocolbuffers/protobuf/releases/download/v33.0/protoc-33.0-win64.zip
+
+
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+
+https://github.com/bloomrpc/bloomrpc/releases
+
