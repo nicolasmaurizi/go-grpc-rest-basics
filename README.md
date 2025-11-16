@@ -16,6 +16,8 @@ Es un proyecto perfecto para:
 
 ## 🧱 Arquitectura general
 
+![Arquitectura gRPC + REST + Go + PostgreSQL](docs/diagrams/architecture.png)
+
 ### Flujo de funcionamiento
 
 - **gRPC**:
@@ -25,8 +27,18 @@ Es un proyecto perfecto para:
   - Endpoint `GET /users`.
   - Consulta todos los usuarios desde PostgreSQL.
   - Devuelve la lista en formato JSON.
+ 
+ ##🔧 Configuración de la base de datos
 
-### Diagrama 
+CREATE DATABASE bloomgrpc;
+
+\c bloomgrpc;
+
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name  VARCHAR(100) NOT NULL,
+  email VARCHAR(200) NOT NULL UNIQUE
+);
 
 #### 🚀 Ejecución
 protoc --go_out=. --go-grpc_out=. proto/user.proto
