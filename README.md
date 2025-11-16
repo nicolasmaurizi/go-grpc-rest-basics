@@ -26,16 +26,11 @@ Es un proyecto perfecto para:
   - Consulta todos los usuarios desde PostgreSQL.
   - Devuelve la lista en formato JSON.
 
-### Diagrama (Mermaid)
+### Diagrama 
 
-> Podés ver este diagrama directamente en GitHub si Mermaid está habilitado o copiarlo en https://mermaid.live
+#### 🚀 Ejecución
+protoc --go_out=. --go-grpc_out=. proto/user.proto
 
-```mermaid
-flowchart LR
-    A[BloomRPC / Cliente gRPC] -->|CreateUser(name,email)| B[gRPC Server en Go]
-    B -->|INSERT INTO| C[(PostgreSQL<br/>Tabla users)]
+##### 🚀 Levantar servidores
+go run ./cmd/server
 
-    D[Cliente REST<br/>(Browser / Postman)] -->|GET /users| E[HTTP Server en Go]
-    E -->|SELECT * FROM users| C
-    C -->|Lista de usuarios| E
-    E -->|JSON<br/>200 OK| D
