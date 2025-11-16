@@ -4,17 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
-	"os"
 
 	_ "github.com/lib/pq"
+	"github.com/nicolasmaurizi/go-grpc-rest-basics/config"
+	"github.com/nicolasmaurizi/go-grpc-rest-basics/db"
+	userpb "github.com/nicolasmaurizi/go-grpc-rest-basics/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
-
-	userpb "github.com/nicolasmaurizi/go-grpc-rest-basics/proto"
 )
 
 type User struct {
@@ -105,31 +104,13 @@ func logRawInterceptor(
 }
 
 func main() {
-	// DATABASE_URL
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			getenv("DB_HOST", "localhost"),
-			getenv("DB_PORT", "5432"),
-			getenv("DB_USER", "postgres"),
-			getenv("DB_PASSWORD", "admin"),
-			getenv("DB_NAME", "bloomgrpc"),
-		)
-	}
-
-	db, err := sql.Open("postgres", dsn)
-	if err != nil {
-		log.Fatalf("failed to open db: %v", err)
-	}
-	defer db.Close()
-
-	if err := db.Ping(); err != nil {
-		log.Fatalf("error ping db: %v", err)
-	}
-
+	// 1. Cargo configuración
+	appCfg := config.Load()
+	// 2. Conecto a la base de datos
+	database := db.NewPostgres(appCfg.DB)
+	defer database.Close()
 	// ---- Servidor gRPC ----
-	grpcLis, err := net.Listen("tcp", ":50051")
+	grpcLis, err := net.Listen("tcp", ":"+appCfg.GRPCPort)
 	if err != nil {
 		log.Fatalf("failed to listen grpc: %v", err)
 	}
@@ -137,10 +118,10 @@ func main() {
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(logRawInterceptor),
 	)
-	userpb.RegisterUserServiceServer(grpcServer, &userServer{db: db})
+	userpb.RegisterUserServiceServer(grpcServer, &userServer{db: database})
 
 	go func() {
-		log.Println("gRPC server listening on :50051")
+		log.Println("gRPC server listening on :" + appCfg.GRPCPort)
 		if err := grpcServer.Serve(grpcLis); err != nil {
 			log.Fatalf("failed to serve grpc: %v", err)
 		}
@@ -148,22 +129,15 @@ func main() {
 
 	// ---- Servidor REST ----
 	mux := http.NewServeMux()
-	mux.Handle("/users", listUsersHandler(db))
+	mux.Handle("/users", listUsersHandler(database))
 
 	httpServer := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + appCfg.HTTPPort,
 		Handler: mux,
 	}
 
-	log.Println("HTTP server listening on :8080")
+	log.Println("HTTP server listening on :" + appCfg.HTTPPort)
 	if err := httpServer.ListenAndServe(); err != nil {
 		log.Fatalf("http server error: %v", err)
 	}
-}
-
-func getenv(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }
